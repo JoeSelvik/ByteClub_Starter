@@ -55,7 +55,41 @@
 
 -(void)retreiveNoteText
 {
+    NSString *fileApi =
+    @"https://api-content.dropbox.com/1/files/dropbox";
+    NSString *escapedPath = [_note.path
+                             stringByAddingPercentEscapesUsingEncoding:
+                             NSUTF8StringEncoding];
     
+    NSString *urlStr = [NSString stringWithFormat: @"%@/%@",
+                        fileApi,escapedPath];
+    
+    NSURL *url = [NSURL URLWithString: urlStr];
+    
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    
+    [[_session dataTaskWithURL:url completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        
+        if (!error) {
+            NSHTTPURLResponse *httpResp = (NSHTTPURLResponse*) response;
+            if (httpResp.statusCode == 200) {
+                // 3
+                NSString *text =
+                [[NSString alloc]initWithData:data
+                                     encoding:NSUTF8StringEncoding];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+                    self.textView.text = text;
+                });
+                
+            } else {
+                // HANDLE BAD RESPONSE //
+            }
+        } else {
+            // ALWAYS HANDLE ERRORS :-] //
+        }
+        // 4
+    }] resume];
 }
 
 #pragma mark - send messages to delegate
