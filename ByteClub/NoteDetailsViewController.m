@@ -55,7 +55,7 @@
 
 -(void)retreiveNoteText
 {
-
+    
 }
 
 #pragma mark - send messages to delegate
@@ -76,7 +76,33 @@
         _note.path = _filename.text;
         
         // - UPLOAD FILE TO DROPBOX - //
-        [self.delegate noteDetailsViewControllerDoneWithDetails:self];
+        //[self.delegate noteDetailsViewControllerDoneWithDetails:self];
+        NSURL *url = [Dropbox uploadURLForPath:_note.path];
+        
+        NSMutableURLRequest *request =
+        [[NSMutableURLRequest alloc] initWithURL:url];
+        [request setHTTPMethod:@"PUT"];
+        
+        NSData *noteContents = [_note.contents dataUsingEncoding:NSUTF8StringEncoding];
+        
+        NSURLSessionUploadTask *uploadTask = [_session
+                                              uploadTaskWithRequest:request
+                                              fromData:noteContents
+                                              completionHandler:^(NSData *data,
+                                                                  NSURLResponse *response,
+                                                                  NSError *error)
+        {   
+            NSHTTPURLResponse *httpResp = (NSHTTPURLResponse*) response;
+            
+            if (!error && httpResp.statusCode == 200) {
+                
+                [self.delegate noteDetailsViewControllerDoneWithDetails:self];
+            } else {
+                // alert for error saving / updating note
+            }
+        }];
+        
+        [uploadTask resume];
         
     } else {
         UIAlertView *noTextAlert = [[UIAlertView alloc] initWithTitle:@"No text"
